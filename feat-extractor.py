@@ -22,3 +22,4 @@ class FeatureExtractor:
         descriptor = cv2.ORB_create(nfeatures=nfeats)
         kp, des = descriptor.detectAndCompute(image, None)
         pts = cv2.KeyPoint_convert(kp)
+        return kp, des, pts
