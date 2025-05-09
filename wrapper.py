@@ -6,9 +6,13 @@ from feat_extractor import FeatureExtractor
 class Wrapper:
     """Wrapper class responsible for wrapping images"""
 
-    def __init__(self, output_dir):
+    def __init__(self, output_dir=None):
         """Initalize the wrapper class with a feature extractor."""
-        self.extractor = FeatureExtractor(output_dir=output_dir)
+        self.extractor = FeatureExtractor()
+        if output_dir:
+            self.output_dir = output_dir
+        else:
+            self.output_dir = os.path.joins(os.getcwd(), "output")
     
     def match_descriptors(self, des1, des2, ratio=0.75):
         """Get matching descriptors between 2 images."""

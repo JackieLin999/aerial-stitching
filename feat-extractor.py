@@ -9,17 +9,13 @@ class FeatureExtractor:
     for each image.
     """
     
-    def __init__(self, temp_dir=None, output_dir, nfeats=5000):
+    def __init__(self, nfeats=5000):
         """Handle the initilization of the feature extractor."""
-        if not temp_dir:
-            self.temp_dir = os.path.join(os.getcwd(), "temp")
-        else:
-            self.temp_dir = temp_dir
-        self.output_dir = output_dir
+        self.nfeats = nfeats
     
     def detect_and_describe(self, image):
         """Extract the key pts and the descriptor from an image.""""
-        descriptor = cv2.ORB_create(nfeatures=nfeats)
+        descriptor = cv2.ORB_create(nfeatures=self.nfeats)
         kp, des = descriptor.detectAndCompute(image, None)
         pts = cv2.KeyPoint_convert(kp)
         return kp, des, pts
