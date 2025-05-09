@@ -8,11 +8,11 @@ class FeatureExtractor:
     Computes the keypoints (corners) and descriptors
     for each image.
     """
-    
-    def __init__(self, nfeats=5000):
+
+    def __init__(self, nfeats):
         """Handle the initilization of the feature extractor."""
         self.nfeats = nfeats
-    
+
     def detect_and_describe(self, image_path):
         """Extract the key pts and the descriptor from an image."""
         image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)

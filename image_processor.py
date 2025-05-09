@@ -12,10 +12,10 @@ class ImageProcessor:
 
     def __init__(
         self,
-        images_dir=None,
-        focal_length=4800,
-        principal_x=2254,
-        principal_y=2048
+        images_dir,
+        focal_length,
+        principal_x,
+        principal_y
     ):
         """Handle the initialization of the image processor class."""
         self.camera = {
@@ -31,9 +31,6 @@ class ImageProcessor:
             "roi":      None,
         }
 
-        self.images_dir = (
-            images_dir or os.path.join(os.getcwd(), "images", "test")
-        )
         self.temp_dir = os.path.join(os.getcwd(), "temp")
         os.makedirs(self.temp_dir, exist_ok=True)
 
@@ -63,6 +60,7 @@ class ImageProcessor:
     def process_images(self):
         """Process the aerial photographs."""
         x, y, w, h = self.camera['roi']
+        photos_w_geo = {}
         for i, photo in enumerate(self.photos):
             img_path = os.path.join(self.images_dir, photo)
             img = cv2.imread(img_path)
@@ -77,7 +75,9 @@ class ImageProcessor:
                 f"processed_image_{i}.jpg"
             )
             cv2.imwrite(processed_image_path, processed_photo)
-            # need to get gps data as well
+            gps = get_gps(img_path)
+        print("Image Processing successful")
+        return self.photos
 
     def get_gps(self, image_path):
         """Extract the gps coordinates from the image."""
@@ -116,3 +116,12 @@ class ImageProcessor:
             "long": longitude,
             "alt": altitude
         }
+
+    def get_base_gps(self):
+        """Get the base gps coords of the images."""
+        first_img = os.path.joins(self.temp_dir, "processed_image_0.jpg")
+        return self.get_gps(get_base_gps)
+
+    def get_img_size(self):
+        """Return the image size."""
+        return self.camera["img_size"]

@@ -1,19 +1,86 @@
 """Wrapper class for warping 2 images together"""
 import os
 import cv2
+import math
+from pyproj import Proj
 from feat_extractor import FeatureExtractor
+from image_processor import ImageProcessor
 
 class Wrapper:
     """Wrapper class responsible for wrapping images"""
 
-    def __init__(self, output_dir=None):
+    def __init__(
+        self, input_dir,
+        output_dir=None, focal_length=4800,
+        principal_x=2254, principal_y=2048,
+        nfeats=5000, sensor_width=0.01127
+        ):
         """Initalize the wrapper class with a feature extractor."""
+        self.images_dir = (
+            input_dir or os.path.join(os.getcwd(), "images", "test")
+        )
+
+        self.img_processor = ImageProcessor(
+            images_dir=self.images_dir,
+            focal_length=focal_length,
+            principal_x=principal_x,
+            principal_y=principal_y
+        )
+
+        # photos holds all file path for the images
+        photos = self.img_processor.process_images()
+
+        self.image_positions = {}
+        self._est_imgs_pos(imgs=photos)
+
         self.extractor = FeatureExtractor()
+
+        self.focal_length = focal_length
+
+        self.gps_info = {
+            "base_gps": None,
+            "ground_resolution": None,
+            "utm_zone": None
+        }
+
         if output_dir:
             self.output_dir = output_dir
         else:
             self.output_dir = os.path.joins(os.getcwd(), "output")
+        os.makedirs(self.output_dir, exist_ok=True)
     
+    def _init_gps_infos(self, sensor_width):
+        """Initalize the gps_info variable for the wrapper class."""
+        self.gps_info["base_gps"] = self.img_processor.get_base_gps()
+        self.gps_info["ground_resolution"] = self._calculate_ground_res(sensor_width)
+        self.gps_info["utm_zone"] = self._calculate_utm_zone(self.gps_info["base_gps"]["long"])
+        print("Sucessfully initalize gps infos")
+
+    def _calcuate_ground_res(self, sensor_width):
+        img_width = self.image_processor.get_img_size()[0]
+        return (sensor_width * self.gps_info["alt"]) / (self.focal_length * img_width) 
+
+    def _calculate_utm_zone(self, longitude):
+        """Calculate the utm zone the drone is in."""
+        return int(math.floor((longitude + 180) / 6) + 1)
+
+    def _est_imgs_pos(self, imgs):
+        """Add UTM coordinate to each image."""
+        # an object for conversion between degree to utm x, y
+        proj = Proj(proj='utm', zone=self.utm_zone, ellps='WGS84')
+        lat, long = self.gps_info["base_gps"]
+        base_x, base_y = proj(lat, long)
+        for img in imgs:
+            curr_gps = self.img_processor.get_gps(image_path=img)
+            x, y = proj(curr_gps['lat'], curr_gps['long'])
+            self.image_positions[img] = {
+                'utm_x': x,
+                'utm_y': y,
+                'gps': curr_gps,
+                'offset': (x - base_x, y - base_y)
+            }
+        print("Sucessfully Complete estimating image positions")
+
     def match_descriptors(self, des1, des2, ratio=0.75):
         """Get matching descriptors between 2 images."""
         matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
@@ -45,7 +112,7 @@ class Wrapper:
         hB, wB = img_b.shape[:2]
         warpedA = cv2.warpPerspective(img_a, H, (wB, hB))
         maskA = (warpedA > 0).all(axis=2)
-        maskB = (img_b    > 0).all(axis=2)
+        maskB = (img_b > 0).all(axis=2)
         blend = warpedA.copy()
         # average in overlap
         overlap = maskA & maskB
