@@ -1,8 +1,10 @@
-# pylint: disable=no-member,unpacking-non-sequence,too-few-public-methods
+# pylint: disable=no-member,unpacking-non-sequence
 """Preprocessor class."""
 import os
 import cv2
 import numpy as np
+from PIL import Image
+from PIL.ExifTags import GPSTAGS
 
 
 class ImageProcessor:
@@ -75,3 +77,42 @@ class ImageProcessor:
                 f"processed_image_{i}.jpg"
             )
             cv2.imwrite(processed_image_path, processed_photo)
+            # need to get gps data as well
+
+    def get_gps(self, image_path):
+        """Extract the gps coordinates from the image."""
+        image = Image.open(image_path)
+        # pylint: disable=W0212
+        exif_data = image._getexif()
+        gps_info_tag = 0x8825
+        gps_data = exif_data.get(gps_info_tag)
+        gps = {}
+        for gps_tag in gps_data:
+            sub_tag = GPSTAGS.get(gps_tag, gps_tag)
+            gps[sub_tag] = gps_data[gps_tag]
+        return self._convert_to_decimal_(gps)
+
+    def _convert_to_decimal_(self, gps):
+        """Convert degree, min, sec (dms) to decimal."""
+        def dms_to_deg(dms, ref):
+            degrees, minutes, seconds = dms
+            decimal = degrees + (minutes / 60.0) + (seconds / 3600.0)
+            if ref in ['S', 'W']:
+                decimal = -decimal
+            return decimal
+
+        latitude, longitude, altitude = None, None, None
+        if 'GPSLatitude' in gps and 'GPSLongitude' in gps:
+            latitude = dms_to_deg(
+                gps['GPSLatitude'], gps['GPSLatitudeRef']
+            )
+            longitude = dms_to_deg(
+                gps['GPSLongitude'], gps['GPSLongitudeRef']
+            )
+            altitude = gps.get('GPSAltitude', None)
+
+        return {
+            "lat": latitude,
+            "long": longitude,
+            "alt": altitude
+        }

@@ -13,8 +13,9 @@ class FeatureExtractor:
         """Handle the initilization of the feature extractor."""
         self.nfeats = nfeats
     
-    def detect_and_describe(self, image):
-        """Extract the key pts and the descriptor from an image.""""
+    def detect_and_describe(self, image_path):
+        """Extract the key pts and the descriptor from an image."""
+        image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
         descriptor = cv2.ORB_create(nfeatures=self.nfeats)
         kp, des = descriptor.detectAndCompute(image, None)
         pts = cv2.KeyPoint_convert(kp)
