@@ -3,6 +3,7 @@ import os
 import cv2
 import math
 from pyproj import Proj
+import numpy as np
 from feat_extractor import FeatureExtractor
 from image_processor import ImageProcessor
 
@@ -46,7 +47,7 @@ class Wrapper:
         if output_dir:
             self.output_dir = output_dir
         else:
-            self.output_dir = os.path.joins(os.getcwd(), "output")
+            self.output_dir = os.path.join(os.getcwd(), "output")
         os.makedirs(self.output_dir, exist_ok=True)
     
     def _init_gps_infos(self, sensor_width):
@@ -56,9 +57,9 @@ class Wrapper:
         self.gps_info["utm_zone"] = self._calculate_utm_zone(self.gps_info["base_gps"]["long"])
         print("Sucessfully initalize gps infos")
 
-    def _calcuate_ground_res(self, sensor_width):
+    def _calculate_ground_res(self, sensor_width):
         img_width = self.image_processor.get_img_size()[0]
-        return (sensor_width * self.gps_info["alt"]) / (self.focal_length * img_width) 
+        return (sensor_width * self.gps_info["base_gps"]["alt"]) / (self.focal_length * img_width) 
 
     def _calculate_utm_zone(self, longitude):
         """Calculate the utm zone the drone is in."""
@@ -67,12 +68,13 @@ class Wrapper:
     def _est_imgs_pos(self, imgs):
         """Add UTM coordinate to each image."""
         # an object for conversion between degree to utm x, y
-        proj = Proj(proj='utm', zone=self.utm_zone, ellps='WGS84')
-        lat, long = self.gps_info["base_gps"]
+        proj = Proj(proj='utm', zone=self.gps_info["utm_zone"], ellps='WGS84')
+        base_lat = self.gps_info["base_gps"]["lat"]
+        base_long = self.gps_info["base_gps"]["long"]
         base_x, base_y = proj(lat, long)
         for img in imgs:
             curr_gps = self.img_processor.get_gps(image_path=img)
-            x, y = proj(curr_gps['lat'], curr_gps['long'])
+            x, y = proj(curr_gps['long'], curr_gps['lat'])
             self.image_positions[img] = {
                 'utm_x': x,
                 'utm_y': y,
@@ -98,12 +100,12 @@ class Wrapper:
         pts_a = np.float32([kp1[m.queryIdx].pt for m in matches])
         pts_b = np.float32([kp2[m.trainIdx].pt for m in matches])
         H, status = cv2.find_homography(pts_a, pts_b,
-                                        cv.RANSAC, max_error)
+                                        cv2.RANSAC, max_error)
         return H, status.flatten()
 
     def match(self, img_a, img_b):
-        kp1, des1, _ = self.FeatureExtractor.detect_and_describe(img_a)
-        kp2, des2, _ = self.FeatureExtractor.detect_and_describe(img_b)
+        kp1, des1, _ = self.extractor.detect_and_describe(img_a)
+        kp2, des2, _ = self.extractor.detect_and_describe(img_b)
         matches = self.match_descriptors(des1=des1, des2=des2)
         if len(matches) < 10:
             print("Not enough matches:", len(matches))
@@ -120,3 +122,4 @@ class Wrapper:
                            + img_b[overlap].astype(np.float32)) / 2).astype(np.uint8)
         blend[maskB & ~maskA] = img_b[maskB & ~maskA]
         return blend
+
