@@ -75,7 +75,7 @@ class ImageProcessor:
                 f"processed_image_{i}.jpg"
             )
             cv2.imwrite(processed_image_path, processed_photo)
-            gps = get_gps(img_path)
+            gps = self.get_gps(img_path)
         print("Image Processing successful")
         return self.photos
 
@@ -119,8 +119,8 @@ class ImageProcessor:
 
     def get_base_gps(self):
         """Get the base gps coords of the images."""
-        first_img = os.path.joins(self.temp_dir, "processed_image_0.jpg")
-        return self.get_gps(get_base_gps)
+        first_img = os.path.join(self.temp_dir, "processed_image_0.jpg")
+        return self.get_gps(first_img)
 
     def get_img_size(self):
         """Return the image size."""

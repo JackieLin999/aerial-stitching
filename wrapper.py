@@ -31,10 +31,12 @@ class Wrapper:
         # photos holds all file path for the images
         photos = self.img_processor.process_images()
 
+        self._init_gps_infos(sensor_width)
+
         self.image_positions = {}
         self._est_imgs_pos(imgs=photos)
 
-        self.extractor = FeatureExtractor()
+        self.extractor = FeatureExtractor(nfeats=nfeats)
 
         self.focal_length = focal_length
 
@@ -71,7 +73,7 @@ class Wrapper:
         proj = Proj(proj='utm', zone=self.gps_info["utm_zone"], ellps='WGS84')
         base_lat = self.gps_info["base_gps"]["lat"]
         base_long = self.gps_info["base_gps"]["long"]
-        base_x, base_y = proj(lat, long)
+        base_x, base_y = proj(base_lat, base_long)
         for img in imgs:
             curr_gps = self.img_processor.get_gps(image_path=img)
             x, y = proj(curr_gps['long'], curr_gps['lat'])
@@ -111,15 +113,15 @@ class Wrapper:
             print("Not enough matches:", len(matches))
             return None
         H, status = self.find_homography(kp1=kp1, kp2=kp2, matches=matches)
-        hB, wB = img_b.shape[:2]
-        warpedA = cv2.warpPerspective(img_a, H, (wB, hB))
-        maskA = (warpedA > 0).all(axis=2)
-        maskB = (img_b > 0).all(axis=2)
-        blend = warpedA.copy()
-        # average in overlap
-        overlap = maskA & maskB
-        blend[overlap] = ((warpedA[overlap].astype(np.float32)
-                           + img_b[overlap].astype(np.float32)) / 2).astype(np.uint8)
-        blend[maskB & ~maskA] = img_b[maskB & ~maskA]
-        return blend
-
+        return H
+        # hB, wB = img_b.shape[:2]
+        # warpedA = cv2.warpPerspective(img_a, H, (wB, hB))
+        # maskA = (warpedA > 0).all(axis=2)
+        # maskB = (img_b > 0).all(axis=2)
+        # blend = warpedA.copy()
+        # # average in overlap
+        # overlap = maskA & maskB
+        # blend[overlap] = ((warpedA[overlap].astype(np.float32)
+        #                    + img_b[overlap].astype(np.float32)) / 2).astype(np.uint8)
+        # blend[maskB & ~maskA] = img_b[maskB & ~maskA]
+        # return blend
