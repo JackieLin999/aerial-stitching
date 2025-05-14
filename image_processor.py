@@ -37,7 +37,7 @@ class ImageProcessor:
         self.images_dir = images_dir
 
         self.photos = [
-            photo
+            os.path.join(images_dir, photo)
             for photo in os.listdir(images_dir)
             if photo.lower().endswith(('.jpg', '.png', '.jpeg'))
         ]
@@ -48,7 +48,7 @@ class ImageProcessor:
 
     def _setup_camera(self):
         """Set up the camera intrinsics for cropping."""
-        first_img_path = os.path.join(self.images_dir, self.photos[0])
+        first_img_path = self.photos[0]
         img = cv2.imread(first_img_path)
         h, w = img.shape[:2]
         self.camera["img_size"] = (w, h)
@@ -64,7 +64,7 @@ class ImageProcessor:
         x, y, w, h = self.camera['roi']
         photos_w_geo = {}
         for i, photo in enumerate(self.photos):
-            img_path = os.path.join(self.images_dir, photo)
+            img_path = photo
             img = cv2.imread(img_path)
             processed_photo = cv2.undistort(
                 img, self.camera['mtx'],
