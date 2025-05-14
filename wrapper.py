@@ -36,16 +36,14 @@ class Wrapper:
             "ground_resolution": None,
             "utm_zone": None
         }
-
+        
+        self.focal_length = focal_length
         self._init_gps_infos(sensor_width)
 
         self.image_positions = {}
         self._est_imgs_pos(imgs=photos)
 
         self.extractor = FeatureExtractor(nfeats=nfeats)
-
-        self.focal_length = focal_length
-
 
         if output_dir:
             self.output_dir = output_dir
