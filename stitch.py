@@ -49,6 +49,8 @@ def stitch_aerial_images(
         if i == 0:
             # inital homography alr set
             continue
+        print(f"prev: {processed_files[i - 1]}")
+        print(f"curr: {processed_files[i]}")
         prev = processed_files[i - 1]
         curr = processed_files[i]
 
@@ -103,6 +105,8 @@ def stitch_aerial_images(
     masks = []
 
     # Warp and collect for blending
+    print("Debug")
+    print(processed_files)
     print("start warpping")
     for i, path in enumerate(processed_files):
         img = cv2.imread(path).astype(np.int16)

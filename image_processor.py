@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 from PIL import Image
 from PIL.ExifTags import GPSTAGS
+from PIL.ExifTags import TAGS
 
 
 class ImageProcessor:
@@ -44,6 +45,14 @@ class ImageProcessor:
 
         if not self.photos:
             raise ValueError(f"No images found in {self.images_dir}")
+        
+        self.photos = sorted(
+            [os.path.join(images_dir, photo) 
+             for photo in os.listdir(images_dir) 
+             if photo.lower().endswith(('.jpg', '.png', '.jpeg'))],
+            key=self._get_image_timestamp
+        )
+
         self._setup_camera()
 
     def _setup_camera(self):
@@ -133,3 +142,13 @@ class ImageProcessor:
     def get_img_size(self):
         """Return the image size."""
         return self.camera["img_size"]
+
+    def _get_image_timestamp(self, img_path):
+        image = Image.open(img_path)
+        exif = image._getexif()
+        if exif is None:
+            return 0
+        for tag, value in exif.items():
+            if TAGS.get(tag) == 'DateTimeOriginal':
+                return value
+        return 0
