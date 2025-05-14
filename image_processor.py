@@ -34,6 +34,8 @@ class ImageProcessor:
         self.temp_dir = os.path.join(os.getcwd(), "temp")
         os.makedirs(self.temp_dir, exist_ok=True)
 
+        self.images_dir = images_dir
+
         self.photos = [
             photo
             for photo in os.listdir(images_dir)
