@@ -29,7 +29,7 @@ class Wrapper:
         )
 
         # photos holds all file path for the images
-        photos = self.img_processor.process_images()
+        self.photos = self.img_processor.process_images()
 
         self.gps_info = {
             "base_gps": None,
@@ -41,7 +41,7 @@ class Wrapper:
         self._init_gps_infos(sensor_width)
 
         self.image_positions = {}
-        self._est_imgs_pos(imgs=photos)
+        self._est_imgs_pos(imgs=self.photos)
 
         self.extractor = FeatureExtractor(nfeats=nfeats)
 
@@ -100,7 +100,7 @@ class Wrapper:
         """"Finds the homography to fit the 2 images"""
         pts_a = np.float32([kp1[m.queryIdx].pt for m in matches])
         pts_b = np.float32([kp2[m.trainIdx].pt for m in matches])
-        H, status = cv2.find_homography(pts_a, pts_b,
+        H, status = cv2.findHomography(pts_a, pts_b,
                                         cv2.RANSAC, max_error)
         return H, status.flatten()
 
