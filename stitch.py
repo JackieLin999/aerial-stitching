@@ -22,23 +22,22 @@ def stitch_aerial_images(
         nfeats=nfeats,
         sensor_width=sensor_width
     )
-
+    print("wrapper class initalized")
     # get the process images path
-    processed_files = [
-        os.path.join(wrapper.img_processor.temp_dir, f)
-        for f in wrapper.photos
-    ]
+    processed_files = wrapper.photos
     N = len(processed_files)
     if N < 2:
         raise ValueError("Need at least two images to stitch.")
 
     if georef:
+        print("preparing geo infos")
         mpp = wrapper.gps_info['ground_resolution']
         utm_offsets = { 
             f: wrapper.image_positions[f]['offset'] 
             for f in wrapper.photos
         }
     
+    print("Homographies calculations")
     # now calculates all of the homographies
     homographies = [None] * N 
     # the first image will be the base image
@@ -62,16 +61,18 @@ def stitch_aerial_images(
             ty = dy / mpp
             H_geo = np.array([[1, 0, tx], [0, 1, ty], [0, 0, 1]], dtype=np.float32)
             # combine homography: transform via corners then do little bit of shift with geo homography
-            H_combined = H_geo @ H_seg
+            H_combined = H_geo @ h_seg
         else:
-            H_combined = H_seg
+            H_combined = h_seg
         
         # to maintain that the homography is still "transforming" via the base image
         homographies[i] = homographies[i - 1] @ H_combined
-    
+    print("homographies calculations complete")
+
     # compute canvas (thank you chat gpt)
     # essentially, we find the upper and lower left + right corners
     # and use them to create a canvas - canvas_size in our case
+    print("calculating canvas size")
     all_corners = []
     for i, path in enumerate(processed_files):
         img = cv2.imread(path)
@@ -86,6 +87,7 @@ def stitch_aerial_images(
     canvas_w = int(np.ceil(max_xy[0] - min_xy[0]))
     canvas_h = int(np.ceil(max_xy[1] - min_xy[1]))
     canvas_size = (canvas_w, canvas_h)
+    print("finish calculating canvas size")
 
     # Initialize blender: blender will put all the images together
     blender = cv2.detail_MultiBandBlender() if hasattr(cv2, 'detail_MultiBandBlender') else cv2.detail.MultiBandBlender()
@@ -101,6 +103,7 @@ def stitch_aerial_images(
     masks = []
 
     # Warp and collect for blending
+    print("start warpping")
     for i, path in enumerate(processed_files):
         img = cv2.imread(path).astype(np.int16)
         H = homographies[i].copy()
@@ -116,6 +119,7 @@ def stitch_aerial_images(
         imgs.append(warped)
         masks.append(mask)
         corners.append((0,0))
+    print("finished wrapping")
 
     # Feed into blender
     blender.prepare(np.array(corners, np.int32))
