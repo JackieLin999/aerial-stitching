@@ -29,8 +29,8 @@ class Wrapper:
         )
 
         # photos holds all file path for the images
-        self.photos = self.img_processor.process_images()
-
+        # self.photos = self.img_processor.process_images()
+        self.photos = self.img_processor.photos
         self.gps_info = {
             "base_gps": None,
             "ground_resolution": None,
@@ -50,6 +50,9 @@ class Wrapper:
         else:
             self.output_dir = os.path.join(os.getcwd(), "output")
         os.makedirs(self.output_dir, exist_ok=True)
+
+        self.clusters = self._cluster_imgs()
+        print(self.clusters)
     
     def _init_gps_infos(self, sensor_width):
         """Initalize the gps_info variable for the wrapper class."""
@@ -72,7 +75,7 @@ class Wrapper:
         proj = Proj(proj='utm', zone=self.gps_info["utm_zone"], ellps='WGS84')
         base_lat = self.gps_info["base_gps"]["lat"]
         base_long = self.gps_info["base_gps"]["long"]
-        base_x, base_y = proj(base_lat, base_long)
+        base_x, base_y = proj(base_long, base_lat)
         for img in imgs:
             curr_gps = self.img_processor.get_gps(image_path=img)
             x, y = proj(curr_gps['long'], curr_gps['lat'])
@@ -82,6 +85,7 @@ class Wrapper:
                 'gps': curr_gps,
                 'offset': (x - base_x, y - base_y)
             }
+            print(self.image_positions[img])
         print("Sucessfully Complete estimating image positions")
 
     def match_descriptors(self, des1, des2, ratio=0.75):
@@ -113,14 +117,24 @@ class Wrapper:
             return None
         H, status = self.find_homography(kp1=kp1, kp2=kp2, matches=matches)
         return H
-        # hB, wB = img_b.shape[:2]
-        # warpedA = cv2.warpPerspective(img_a, H, (wB, hB))
-        # maskA = (warpedA > 0).all(axis=2)
-        # maskB = (img_b > 0).all(axis=2)
-        # blend = warpedA.copy()
-        # # average in overlap
-        # overlap = maskA & maskB
-        # blend[overlap] = ((warpedA[overlap].astype(np.float32)
-        #                    + img_b[overlap].astype(np.float32)) / 2).astype(np.uint8)
-        # blend[maskB & ~maskA] = img_b[maskB & ~maskA]
-        # return blend
+  
+    def _cluster_imgs(self, distance_threshold=3.5e-5):
+        clusters = []
+        current_cluster = [self.photos[0]]
+        for i in range(1, len(self.photos)):
+            prev = self.photos[i-1]
+            curr = self.photos[i]
+            dx = (self.image_positions[curr]['offset'][0] 
+                  - self.image_positions[prev]['offset'][0])
+            dy = (self.image_positions[curr]['offset'][1] 
+                  - self.image_positions[prev]['offset'][1])
+            distance_m = np.sqrt(dx**2 + dy**2) * self.gps_info['ground_resolution']
+            # add the photo to the cluster
+            print(f"curr dist: {distance_m}")
+            if distance_m > distance_threshold:
+                clusters.append(current_cluster)
+                current_cluster = [curr]
+            else:
+                current_cluster.append(curr)
+        clusters.append(current_cluster)
+        return clusters
