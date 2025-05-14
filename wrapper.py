@@ -31,6 +31,12 @@ class Wrapper:
         # photos holds all file path for the images
         photos = self.img_processor.process_images()
 
+        self.gps_info = {
+            "base_gps": None,
+            "ground_resolution": None,
+            "utm_zone": None
+        }
+
         self._init_gps_infos(sensor_width)
 
         self.image_positions = {}
@@ -40,11 +46,6 @@ class Wrapper:
 
         self.focal_length = focal_length
 
-        self.gps_info = {
-            "base_gps": None,
-            "ground_resolution": None,
-            "utm_zone": None
-        }
 
         if output_dir:
             self.output_dir = output_dir
@@ -60,7 +61,7 @@ class Wrapper:
         print("Sucessfully initalize gps infos")
 
     def _calculate_ground_res(self, sensor_width):
-        img_width = self.image_processor.get_img_size()[0]
+        img_width = self.img_processor.get_img_size()[0]
         return (sensor_width * self.gps_info["base_gps"]["alt"]) / (self.focal_length * img_width) 
 
     def _calculate_utm_zone(self, longitude):

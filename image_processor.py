@@ -76,7 +76,13 @@ class ImageProcessor:
                 self.temp_dir,
                 f"processed_image_{i}.jpg"
             )
+
             cv2.imwrite(processed_image_path, processed_photo)
+            original_image = Image.open(img_path)
+            exif_data = original_image.info.get("exif")
+            if exif_data:
+                processed_image = Image.open(processed_image_path)
+                processed_image.save(processed_image_path, "JPEG", exif=exif_data)
             gps = self.get_gps(img_path)
         print("Image Processing successful")
         return self.photos
