@@ -129,3 +129,13 @@ def stitch_aerial_images(
     # Save output
     cv2.imwrite(output_path, mosaic)
     print(f"Mosaic saved to {output_path}")
+
+if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Aerial Image Stitching w/ optional georeference')
+    parser.add_argument('input_dir')
+    parser.add_argument('output_path')
+    parser.add_argument('--no-georef', action='store_false', dest='georef', help='Disable GPS georeferencing')
+    args = parser.parse_args()
+    stitch_aerial_images(args.input_dir, args.output_path, georef=args.georef)
