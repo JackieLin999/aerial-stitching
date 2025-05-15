@@ -52,7 +52,6 @@ class Wrapper:
         os.makedirs(self.output_dir, exist_ok=True)
 
         self.clusters = self._cluster_imgs()
-        print(self.clusters)
     
     def _init_gps_infos(self, sensor_width):
         """Initalize the gps_info variable for the wrapper class."""
