@@ -71,7 +71,7 @@ class ImageProcessor:
     def process_images(self):
         """Process the aerial photographs."""
         x, y, w, h = self.camera['roi']
-        photos_w_geo = {}
+        processed_files = []  # Collect processed image paths
         for i, photo in enumerate(self.photos):
             img_path = photo
             img = cv2.imread(img_path)
@@ -79,22 +79,21 @@ class ImageProcessor:
                 img, self.camera['mtx'],
                 self.camera["distortion"], None, self.camera["new_mtx"]
             )
-            # crop regin of interest
             processed_photo = processed_photo[y:y+h, x:x+w]
             processed_image_path = os.path.join(
                 self.temp_dir,
                 f"processed_image_{i}.jpg"
             )
-
             cv2.imwrite(processed_image_path, processed_photo)
+            # Preserve EXIF data
             original_image = Image.open(img_path)
             exif_data = original_image.info.get("exif")
             if exif_data:
                 processed_image = Image.open(processed_image_path)
                 processed_image.save(processed_image_path, "JPEG", exif=exif_data)
-            gps = self.get_gps(img_path)
+            processed_files.append(processed_image_path)
         print("Image Processing successful")
-        return self.photos
+        return processed_files  # Return paths to processed images
 
     def get_gps(self, image_path):
         """Extract the gps coordinates from the image."""

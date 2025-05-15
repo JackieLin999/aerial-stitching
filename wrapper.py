@@ -29,8 +29,8 @@ class Wrapper:
         )
 
         # photos holds all file path for the images
-        # self.photos = self.img_processor.process_images()
-        self.photos = self.img_processor.photos
+        self.photos = self.img_processor.process_images()
+        # self.photos = self.img_processor.photos
         self.gps_info = {
             "base_gps": None,
             "ground_resolution": None,

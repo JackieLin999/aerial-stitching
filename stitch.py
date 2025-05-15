@@ -56,16 +56,16 @@ def stitch_aerial_images(
 
         # this is the homography through corners
         h_seg = wrapper.match(img_a=prev, img_b=curr)
-
+        h_seg_inv = np.linalg.inv(h_seg)
         if georef:
             dx, dy = utm_offsets[wrapper.photos[i]]
             tx = dx / mpp
             ty = dy / mpp
             H_geo = np.array([[1, 0, tx], [0, 1, ty], [0, 0, 1]], dtype=np.float32)
             # combine homography: transform via corners then do little bit of shift with geo homography
-            H_combined = H_geo @ h_seg
+            H_combined = H_geo @ h_seg_inv
         else:
-            H_combined = h_seg
+            H_combined = h_seg_inv
         
         # to maintain that the homography is still "transforming" via the base image
         homographies[i] = homographies[i - 1] @ H_combined

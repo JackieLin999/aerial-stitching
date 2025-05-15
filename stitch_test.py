@@ -59,7 +59,7 @@ def stitch_aerial_images(
                 # lol just forced it
                 print("fuck it")
                 h_seg = np.eye(3, dtype=np.float32)
-            
+            h_seg_inv = np.linalg.inv(h_seg)
             # geo ref stuff
             if georef:
                 dx, dy = utm_offsets[wrapper.photos[i]]
@@ -67,9 +67,9 @@ def stitch_aerial_images(
                 ty = dy / mpp
                 h_geo = np.array([[1, 0, tx], [0, 1, ty], [0, 0, 1]], dtype=np.float32)
                 # combine homography: transform via corners then do little bit of shift with geo homography
-                h_combined = h_geo @ h_seg
+                h_combined = h_geo @ h_seg_inv
             else:
-                h_combined = h_seg
+                h_combined = h_seg_inv
             
             h_cum = cluster_homo[i-1] @ h_combined
             cluster_homo.append(h_cum)
@@ -94,7 +94,7 @@ def stitch_aerial_images(
 
         cluster_blender = cv2.detail_MultiBandBlender()
         cluster_blender.prepare((0, 0, canvas_size[0], canvas_size[1]))
-        
+
         # Feed into blender
         for img, h in zip(cluster_images, cluster_homo):
             h_translate = np.array([[1, 0, offset[0]], [0, 1, offset[1]], [0, 0, 1]], dtype=np.float32)
