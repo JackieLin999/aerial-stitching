@@ -14,9 +14,11 @@ class Wrapper:
         self, input_dir,
         output_dir=None, focal_length=4800,
         principal_x=2254, principal_y=2048,
-        nfeats=5000, sensor_width=0.01127
+        nfeats=5000, sensor_width=0.01127,
+        orb=True
         ):
         """Initalize the wrapper class with a feature extractor."""
+        self.orb = orb
         self.images_dir = (
             input_dir or os.path.join(os.getcwd(), "images", "test")
         )
@@ -87,9 +89,12 @@ class Wrapper:
             print(self.image_positions[img])
         print("Sucessfully Complete estimating image positions")
 
-    def match_descriptors(self, des1, des2, ratio=0.75):
+    def match_descriptors(self, des1, des2, ratio=0.6):
         """Get matching descriptors between 2 images."""
-        matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
+        if self.orb:
+            matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
+        else:
+            matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
         # use lowe's test
         matches = matcher.knnMatch(des1, des2, k=2)
 
@@ -108,8 +113,8 @@ class Wrapper:
         return H, status.flatten()
 
     def match(self, img_a, img_b):
-        kp1, des1, _ = self.extractor.detect_and_describe(img_a)
-        kp2, des2, _ = self.extractor.detect_and_describe(img_b)
+        kp1, des1, _ = self.extractor.detect_and_describe(img_a, orb=self.orb)
+        kp2, des2, _ = self.extractor.detect_and_describe(img_b, orb=self.orb)
         matches = self.match_descriptors(des1=des1, des2=des2)
         if len(matches) < 10:
             print("Not enough matches:", len(matches))

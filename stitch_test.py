@@ -1,4 +1,5 @@
 import os
+import time
 import cv2
 import numpy as np
 from wrapper import Wrapper
@@ -9,7 +10,7 @@ def stitch_aerial_images(
     focal_length: float = 4800,
     principal_x: float = 2254,
     principal_y: float = 2048,
-    nfeats: int = 5000,
+    nfeats: int = 10000,
     sensor_width: float = 0.01127,
     georef: bool = True
 ):
@@ -20,7 +21,8 @@ def stitch_aerial_images(
         principal_x=principal_x,
         principal_y=principal_y,
         nfeats=nfeats,
-        sensor_width=sensor_width
+        sensor_width=sensor_width,
+        orb=False
     )
     print("wrapper class initalized")
     # get the process images path
@@ -119,4 +121,7 @@ if __name__ == '__main__':
     parser.add_argument('output_path')
     parser.add_argument('--no-georef', action='store_false', dest='georef', help='Disable GPS georeferencing')
     args = parser.parse_args()
+    start_time = time.time()
     stitch_aerial_images(args.input_dir, args.output_path, georef=args.georef)
+    total_time = time.time() - start_time
+    print(f"Total execution time: {total_time:.2f} seconds")
