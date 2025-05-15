@@ -16,7 +16,12 @@ class FeatureExtractor:
     def detect_and_describe(self, image_path):
         """Extract the key pts and the descriptor from an image."""
         image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-        descriptor = cv2.ORB_create(nfeatures=self.nfeats)
+        descriptor = cv2.ORB_create(
+            nfeatures=self.nfeats,
+            scaleFactor=1.2,
+            nlevels=17,
+            edgeThreshold=12
+        )
         kp, des = descriptor.detectAndCompute(image, None)
         pts = cv2.KeyPoint_convert(kp)
         return kp, des, pts
