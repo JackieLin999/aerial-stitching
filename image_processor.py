@@ -118,14 +118,39 @@ class ImageProcessor:
             return decimal
 
         latitude, longitude, altitude = None, None, None
-        if 'GPSLatitude' in gps and 'GPSLongitude' in gps:
-            latitude = dms_to_deg(
-                gps['GPSLatitude'], gps['GPSLatitudeRef']
-            )
-            longitude = dms_to_deg(
-                gps['GPSLongitude'], gps['GPSLongitudeRef']
-            )
-            altitude = gps.get('GPSAltitude', None)
+        # if 'GPSLatitude' in gps and 'GPSLongitude' in gps:
+        #     latitude = dms_to_deg(
+        #         gps['GPSLatitude'], gps['GPSLatitudeRef']
+        #     )
+        #     longitude = dms_to_deg(
+        #         gps['GPSLongitude'], gps['GPSLongitudeRef']
+        #     )
+        #     altitude = gps.get('GPSAltitude', None)
+
+        try:
+            # Parse latitude/longitude
+            if 'GPSLatitude' in gps and 'GPSLatitudeRef' in gps:
+                latitude = dms_to_deg(gps['GPSLatitude'], gps['GPSLatitudeRef'])
+                
+            if 'GPSLongitude' in gps and 'GPSLongitudeRef' in gps:
+                longitude = dms_to_deg(gps['GPSLongitude'], gps['GPSLongitudeRef'])
+
+            # Parse altitude with rational number handling
+            if 'GPSAltitude' in gps:
+                alt_data = gps['GPSAltitude']
+                if isinstance(alt_data, tuple) and len(alt_data) == 2:
+                    altitude = float(alt_data[0]) / float(alt_data[1])
+                else:
+                    altitude = float(alt_data)
+
+                # Handle altitude reference (0 = above sea level, 1 = below)
+                if 'GPSAltitudeRef' in gps and gps['GPSAltitudeRef'] == 1:
+                    altitude = -abs(altitude)
+
+        except (TypeError, ValueError, ZeroDivisionError) as e:
+            print(f"GPS parsing warning: {str(e)}")
+            # Preserve valid values if only altitude parsing failed
+            altitude = None if isinstance(e, (TypeError, ZeroDivisionError)) else altitude
 
         return {
             "lat": latitude,

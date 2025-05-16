@@ -26,6 +26,18 @@ def stitch_aerial_images(
     )
     print("wrapper class initalized")
     # get the process images path
+    if georef:
+        print("preparing geo infos")
+        mpp = wrapper.gps_info['ground_resolution']
+        print(f"the mpp: {mpp}")
+        utm_offsets = { 
+            f: wrapper.image_positions[f]['offset'] 
+            for f in wrapper.photos
+        }
+    else:
+        mpp = None
+        utm_offsets = None
+    
     clusters = wrapper.clusters
     cluster_output_dir = os.path.join(os.getcwd(), output_path)
     os.makedirs(cluster_output_dir, exist_ok=True)
@@ -34,20 +46,6 @@ def stitch_aerial_images(
     for cluster_index, cluster in enumerate(clusters):
         print(f"Processing cluster {cluster_index + 1}/{len(clusters)}...")
         homographies = []
-
-        # Get base image's UTM offset for this cluster
-        # if georef:
-        #     base_img = cluster[0]
-        #     base_x, base_y = utm_offsets[base_img]
-        #     H_global = np.array([
-        #         [1, 0, base_x/mpp],
-        #         [0, 1, base_y/mpp],
-        #         [0, 0, 1]
-        #     ], dtype=np.float32)
-        # else:
-        #     H_global = np.eye(3, dtype=np.float32)
-
-        # computing homographies for each clusters
         print("start calculating homography")
         cluster_size = len(cluster)
         # init w identity matrix for the 1st image or ur base img for that cluster
@@ -64,12 +62,17 @@ def stitch_aerial_images(
             h_seg_inv = np.linalg.inv(h_seg)
             # geo ref stuff
             if georef:
-                dx, dy = utm_offsets[wrapper.photos[i]]
-                tx = dx / mpp
-                ty = dy / mpp
+                base_img = cluster[0]
+                base_dx, base_dy = utm_offsets[base_img]
+
+                curr_dx, curr_dy = utm_offsets[curr_img]
+                tx = (curr_dx - base_dx) / mpp  # Relative to cluster base
+                ty = (curr_dy - base_dy) / mpp
+
                 h_geo = np.array([[1, 0, tx], [0, 1, ty], [0, 0, 1]], dtype=np.float32)
                 # combine homography: transform via corners then do little bit of shift with geo homography
-                h_combined = h_geo @ h_seg_inv
+                # h_combined = h_geo @ h_seg_inv
+                h_combined = h_seg_inv @ h_geo
             else:
                 h_combined = h_seg_inv
             

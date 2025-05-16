@@ -64,7 +64,9 @@ class Wrapper:
 
     def _calculate_ground_res(self, sensor_width):
         img_width = self.img_processor.get_img_size()[0]
-        return (sensor_width * self.gps_info["base_gps"]["alt"]) / (self.focal_length * img_width) 
+        # yeah this is kinda jinxed rn. fix later
+        focal_m = 0.012
+        return (sensor_width * self.gps_info["base_gps"]["alt"]) / (focal_m * img_width) 
 
     def _calculate_utm_zone(self, longitude):
         """Calculate the utm zone the drone is in."""
@@ -122,7 +124,7 @@ class Wrapper:
         H, status = self.find_homography(kp1=kp1, kp2=kp2, matches=matches)
         return H
   
-    def _cluster_imgs(self, distance_threshold=3.5e-5):
+    def _cluster_imgs(self, distance_threshold=20):
         clusters = []
         current_cluster = [self.photos[0]]
         for i in range(1, len(self.photos)):

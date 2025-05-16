@@ -52,8 +52,6 @@ def stitch_aerial_images(
         if i == 0:
             # inital homography alr set
             continue
-        print(f"prev: {processed_files[i - 1]}")
-        print(f"curr: {processed_files[i]}")
         prev = processed_files[i - 1]
         curr = processed_files[i]
 
