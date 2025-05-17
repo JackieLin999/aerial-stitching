@@ -45,7 +45,7 @@ class Wrapper:
         self.image_positions = {}
         self._est_imgs_pos(imgs=self.photos)
 
-        self.extractor = FeatureExtractor(nfeats=nfeats)
+        self.extractor = FeatureExtractor(nfeats=nfeats, orb=False)
 
         if output_dir:
             self.output_dir = output_dir
@@ -64,8 +64,8 @@ class Wrapper:
 
     def _calculate_ground_res(self, sensor_width):
         img_width = self.img_processor.get_img_size()[0]
-        # yeah this is kinda jinxed rn. fix later
-        focal_m = 0.012
+        pixel_size = sensor_width / img_width
+        focal_m = self.focal_length * pixel_size
         return (sensor_width * self.gps_info["base_gps"]["alt"]) / (focal_m * img_width) 
 
     def _calculate_utm_zone(self, longitude):
@@ -88,7 +88,6 @@ class Wrapper:
                 'gps': curr_gps,
                 'offset': (x - base_x, y - base_y)
             }
-            print(self.image_positions[img])
         print("Sucessfully Complete estimating image positions")
 
     def match_descriptors(self, des1, des2, ratio=0.6):
@@ -106,7 +105,7 @@ class Wrapper:
                 good_matches.append(m)
         return good_matches
 
-    def find_homography(self, kp1, kp2, matches, max_error=4.0):
+    def find_homography(self, kp1, kp2, matches, max_error=2.0):
         """"Finds the homography to fit the 2 images"""
         pts_a = np.float32([kp1[m.queryIdx].pt for m in matches])
         pts_b = np.float32([kp2[m.trainIdx].pt for m in matches])
@@ -115,8 +114,8 @@ class Wrapper:
         return H, status.flatten()
 
     def match(self, img_a, img_b):
-        kp1, des1, _ = self.extractor.detect_and_describe(img_a, orb=self.orb)
-        kp2, des2, _ = self.extractor.detect_and_describe(img_b, orb=self.orb)
+        kp1, des1, _ = self.extractor.detect_and_describe(img_a)
+        kp2, des2, _ = self.extractor.detect_and_describe(img_b)
         matches = self.match_descriptors(des1=des1, des2=des2)
         if len(matches) < 10:
             print("Not enough matches:", len(matches))
@@ -136,7 +135,6 @@ class Wrapper:
                   - self.image_positions[prev]['offset'][1])
             distance_m = np.sqrt(dx**2 + dy**2) * self.gps_info['ground_resolution']
             # add the photo to the cluster
-            print(f"curr dist: {distance_m}")
             if distance_m > distance_threshold:
                 clusters.append(current_cluster)
                 current_cluster = [curr]

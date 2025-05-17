@@ -7,11 +7,11 @@ from wrapper import Wrapper
 def stitch_aerial_images(
     input_dir: str,
     output_path: str,
-    focal_length: float = 4800,
-    principal_x: float = 2254,
-    principal_y: float = 2048,
-    nfeats: int = 10000,
-    sensor_width: float = 0.01127,
+    focal_length: float = 8331,
+    principal_x: float = 2000,
+    principal_y: float = 1500,
+    nfeats: int = 20000,
+    sensor_width: float = 0.0096,
     georef: bool = True
 ):
     """Stitch all of the images"""
@@ -47,9 +47,11 @@ def stitch_aerial_images(
         print(f"Processing cluster {cluster_index + 1}/{len(clusters)}...")
         homographies = []
         print("start calculating homography")
+
         cluster_size = len(cluster)
         # init w identity matrix for the 1st image or ur base img for that cluster
-        cluster_homo = [np.eye(3, dtype=np.float32)]
+        H_base = np.eye(3, dtype=np.float32)
+        cluster_homo = [H_base]
         for i in range(1, cluster_size):
             prev_img = cluster[i-1]
             curr_img = cluster[i]
@@ -72,7 +74,8 @@ def stitch_aerial_images(
                 h_geo = np.array([[1, 0, tx], [0, 1, ty], [0, 0, 1]], dtype=np.float32)
                 # combine homography: transform via corners then do little bit of shift with geo homography
                 # h_combined = h_geo @ h_seg_inv
-                h_combined = h_seg_inv @ h_geo
+                h_combined = h_geo @ h_seg_inv 
+                # h_combined = 0.8 * h_seg_inv + 0.2 * h_geo
             else:
                 h_combined = h_seg_inv
             
