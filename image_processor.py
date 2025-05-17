@@ -82,7 +82,7 @@ class ImageProcessor:
             processed_photo = processed_photo[y:y+h, x:x+w]
             processed_image_path = os.path.join(
                 self.temp_dir,
-                f"processed_image_{i}.jpg"
+                f"processed_image_{i}.png"
             )
             cv2.imwrite(processed_image_path, processed_photo)
             # Preserve EXIF data
@@ -160,7 +160,7 @@ class ImageProcessor:
 
     def get_base_gps(self):
         """Get the base gps coords of the images."""
-        first_img = os.path.join(self.temp_dir, "processed_image_0.jpg")
+        first_img = os.path.join(self.temp_dir, "processed_image_0.png")
         return self.get_gps(first_img)
 
     def get_img_size(self):

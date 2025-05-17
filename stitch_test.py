@@ -114,7 +114,7 @@ def stitch_aerial_images(
         # save it
         result, result_mask = cluster_blender.blend(None, None)
         stitched_image = cv2.convertScaleAbs(result)
-        cluster_output_path = os.path.join(cluster_output_dir, f"cluster_{cluster_index + 1}.jpg")
+        cluster_output_path = os.path.join(cluster_output_dir, f"cluster_{cluster_index + 1}.png")
         cv2.imwrite(cluster_output_path, stitched_image)
         print(f"Cluster {cluster_index + 1} stitched and saved to {cluster_output_path}.")
 

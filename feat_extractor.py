@@ -24,7 +24,7 @@ class FeatureExtractor:
                 nfeatures=self.nfeats,
                 contrastThreshold=0.005,
                 edgeThreshold=15,
-                nOctaveLayers=8,
+                nOctaveLayers=12,
                 sigma=1.2
             )
 
@@ -33,6 +33,6 @@ class FeatureExtractor:
         image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         enhanced_image = clahe.apply(image)
-        kp, des = self.descriptor.detectAndCompute(image, None)
+        kp, des = self.descriptor.detectAndCompute(enhanced_image, None)
         pts = cv2.KeyPoint_convert(kp)
         return kp, des, pts

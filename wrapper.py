@@ -90,7 +90,7 @@ class Wrapper:
             }
         print("Sucessfully Complete estimating image positions")
 
-    def match_descriptors(self, des1, des2, ratio=0.6):
+    def match_descriptors(self, des1, des2, ratio=0.5):
         """Get matching descriptors between 2 images."""
         if self.orb:
             matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
@@ -105,7 +105,7 @@ class Wrapper:
                 good_matches.append(m)
         return good_matches
 
-    def find_homography(self, kp1, kp2, matches, max_error=2.0):
+    def find_homography(self, kp1, kp2, matches, max_error=1.5):
         """"Finds the homography to fit the 2 images"""
         pts_a = np.float32([kp1[m.queryIdx].pt for m in matches])
         pts_b = np.float32([kp2[m.trainIdx].pt for m in matches])
