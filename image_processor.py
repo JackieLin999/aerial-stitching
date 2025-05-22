@@ -45,10 +45,10 @@ class ImageProcessor:
 
         if not self.photos:
             raise ValueError(f"No images found in {self.images_dir}")
-        
+
         self.photos = sorted(
-            [os.path.join(images_dir, photo) 
-             for photo in os.listdir(images_dir) 
+            [os.path.join(images_dir, photo)
+             for photo in os.listdir(images_dir)
              if photo.lower().endswith(('.jpg', '.png', '.jpeg'))],
             key=self._get_image_timestamp
         )
@@ -90,7 +90,10 @@ class ImageProcessor:
             exif_data = original_image.info.get("exif")
             if exif_data:
                 processed_image = Image.open(processed_image_path)
-                processed_image.save(processed_image_path, "JPEG", exif=exif_data)
+                processed_image.save(
+                    processed_image_path,
+                    "JPEG", exif=exif_data
+                )
             processed_files.append(processed_image_path)
         print("Image Processing successful")
         return processed_files  # Return paths to processed images
@@ -121,10 +124,16 @@ class ImageProcessor:
         try:
             # Parse latitude/longitude
             if 'GPSLatitude' in gps and 'GPSLatitudeRef' in gps:
-                latitude = dms_to_deg(gps['GPSLatitude'], gps['GPSLatitudeRef'])
-                
+                latitude = dms_to_deg(
+                    gps['GPSLatitude'],
+                    gps['GPSLatitudeRef']
+                )
+
             if 'GPSLongitude' in gps and 'GPSLongitudeRef' in gps:
-                longitude = dms_to_deg(gps['GPSLongitude'], gps['GPSLongitudeRef'])
+                longitude = dms_to_deg(
+                    gps['GPSLongitude'],
+                    gps['GPSLongitudeRef']
+                )
 
             # Parse altitude with rational number handling
             if 'GPSAltitude' in gps:
@@ -140,8 +149,7 @@ class ImageProcessor:
 
         except (TypeError, ValueError, ZeroDivisionError) as e:
             print(f"GPS parsing warning: {str(e)}")
-            # Preserve valid values if only altitude parsing failed
-            altitude = None if isinstance(e, (TypeError, ZeroDivisionError)) else altitude
+            altitude = None
 
         return {
             "lat": latitude,
@@ -160,7 +168,7 @@ class ImageProcessor:
 
     def _get_image_timestamp(self, img_path):
         image = Image.open(img_path)
-        exif = image._getexif()
+        exif = image._getexif()  # pylint: disable=W0212
         if exif is None:
             return 0
         for tag, value in exif.items():
