@@ -118,15 +118,6 @@ class ImageProcessor:
             return decimal
 
         latitude, longitude, altitude = None, None, None
-        # if 'GPSLatitude' in gps and 'GPSLongitude' in gps:
-        #     latitude = dms_to_deg(
-        #         gps['GPSLatitude'], gps['GPSLatitudeRef']
-        #     )
-        #     longitude = dms_to_deg(
-        #         gps['GPSLongitude'], gps['GPSLongitudeRef']
-        #     )
-        #     altitude = gps.get('GPSAltitude', None)
-
         try:
             # Parse latitude/longitude
             if 'GPSLatitude' in gps and 'GPSLatitudeRef' in gps:

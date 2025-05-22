@@ -1,4 +1,4 @@
-"""Wrapper class for warping 2 images together"""
+"""Wrapper class for warping 2 images together."""
 import os
 import cv2
 import math
@@ -7,8 +7,9 @@ import numpy as np
 from feat_extractor import FeatureExtractor
 from image_processor import ImageProcessor
 
+
 class Wrapper:
-    """Wrapper class responsible for wrapping images"""
+    """Wrapper class responsible for wrapping images."""
 
     def __init__(
         self, input_dir,
@@ -16,8 +17,8 @@ class Wrapper:
         principal_x=2254, principal_y=2048,
         nfeats=5000, sensor_width=0.01127,
         orb=True
-        ):
-        """Initalize the wrapper class with a feature extractor."""
+    ):
+        """Init the wrapper class with a feature extractor."""
         self.orb = orb
         self.images_dir = (
             input_dir or os.path.join(os.getcwd(), "images", "test")
@@ -38,7 +39,6 @@ class Wrapper:
             "ground_resolution": None,
             "utm_zone": None
         }
-        
         self.focal_length = focal_length
         self._init_gps_infos(sensor_width)
 
@@ -54,19 +54,25 @@ class Wrapper:
         os.makedirs(self.output_dir, exist_ok=True)
 
         self.clusters = self._cluster_imgs()
-    
+
     def _init_gps_infos(self, sensor_width):
-        """Initalize the gps_info variable for the wrapper class."""
+        """Init the gps_info variable for the wrapper class."""
         self.gps_info["base_gps"] = self.img_processor.get_base_gps()
-        self.gps_info["ground_resolution"] = self._calculate_ground_res(sensor_width)
-        self.gps_info["utm_zone"] = self._calculate_utm_zone(self.gps_info["base_gps"]["long"])
+        self.gps_info["ground_resolution"] = (
+            self._calculate_ground_res(sensor_width)
+        )
+        self.gps_info["utm_zone"] = (
+            self._calculate_utm_zone(self.gps_info["base_gps"]["long"])
+        )
         print("Sucessfully initalize gps infos")
 
     def _calculate_ground_res(self, sensor_width):
         img_width = self.img_processor.get_img_size()[0]
         pixel_size = sensor_width / img_width
         focal_m = self.focal_length * pixel_size
-        return (sensor_width * self.gps_info["base_gps"]["alt"]) / (focal_m * img_width) 
+        numerator = sensor_width * self.gps_info["base_gps"]["alt"]
+        denominator = focal_m * img_width
+        return numerator / denominator
 
     def _calculate_utm_zone(self, longitude):
         """Calculate the utm zone the drone is in."""
@@ -106,14 +112,17 @@ class Wrapper:
         return good_matches
 
     def find_homography(self, kp1, kp2, matches, max_error=1.5):
-        """"Finds the homography to fit the 2 images"""
+        """Find the homography to fit the 2 images."""
         pts_a = np.float32([kp1[m.queryIdx].pt for m in matches])
         pts_b = np.float32([kp2[m.trainIdx].pt for m in matches])
-        H, status = cv2.findHomography(pts_a, pts_b,
-                                        cv2.RANSAC, max_error)
+        H, status = cv2.findHomography(
+            pts_a, pts_b,
+            cv2.RANSAC, max_error
+        )
         return H, status.flatten()
 
     def match(self, img_a, img_b):
+        """Match the 2 images and return the homography."""
         kp1, des1, _ = self.extractor.detect_and_describe(img_a)
         kp2, des2, _ = self.extractor.detect_and_describe(img_b)
         matches = self.match_descriptors(des1=des1, des2=des2)
@@ -122,18 +131,19 @@ class Wrapper:
             return None
         H, status = self.find_homography(kp1=kp1, kp2=kp2, matches=matches)
         return H
-  
+
     def _cluster_imgs(self, distance_threshold=20):
         clusters = []
         current_cluster = [self.photos[0]]
         for i in range(1, len(self.photos)):
             prev = self.photos[i-1]
             curr = self.photos[i]
-            dx = (self.image_positions[curr]['offset'][0] 
+            dx = (self.image_positions[curr]['offset'][0]
                   - self.image_positions[prev]['offset'][0])
-            dy = (self.image_positions[curr]['offset'][1] 
+            dy = (self.image_positions[curr]['offset'][1]
                   - self.image_positions[prev]['offset'][1])
-            distance_m = np.sqrt(dx**2 + dy**2) * self.gps_info['ground_resolution']
+            euc_dist = np.sqrt(dx**2 + dy**2)
+            distance_m = euc_dist * self.gps_info['ground_resolution']
             # add the photo to the cluster
             if distance_m > distance_threshold:
                 clusters.append(current_cluster)

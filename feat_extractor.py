@@ -1,10 +1,12 @@
+# pylint: disable=too-few-public-methods
 """Feature extractor for aerial mapping."""
-import os
 import cv2
+
 
 class FeatureExtractor:
     """
     A class for extracting the feature for an image.
+
     Computes the keypoints (corners) and descriptors
     for each image.
     """
