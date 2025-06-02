@@ -40,7 +40,7 @@ class USAC:
         )
         return homography, mask
 
-    def evaluate_homography(self, pts_1, pts_2):
+    def eval_and_est_homography(self, pts_1, pts_2):
         """Compute the quality of the homography."""
         H, mask = self.est_homography(pts1, pts2)
         metrics = {'inliers': 0, 'ratio': 0.0, 'mean_error': float('inf')}

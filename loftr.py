@@ -12,14 +12,15 @@ from kornia.feature import LoFTR
 class LoFTR:
     """A class of the LoFTR for extracting kp and des"""
     
-    def __init__(self):
+    def __init__(self, image_size):
         """Init the LoFTR class."""
         self.matcher = KF.LoFTR(pretrained="outdoor")
+        self.image_size = image_size
 
-    def preprocess_img(self, img_path, size=(512, 512)):
+    def preprocess_img(self, img_path):
         """Load and preprocess an image."""
         img = K.io.load_image(image_path, K.io.ImageLoadType.RGB32)[None, ...]
-        img = K.geometry.resize(img, size, antialias=True)
+        img = K.geometry.resize(img, self.image_size, antialias=True)
         return img
 
     def match(self, img_1, img_2):
