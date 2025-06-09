@@ -29,6 +29,7 @@ class CameraInfoFinder:
         
         image = self._get_first_img()
         width, height = image.size
+        image_size = (width, height)
         principal_x = width // 2
         principal_y = height // 2
         principal_dist = {
@@ -51,7 +52,7 @@ class CameraInfoFinder:
             principal_dist=principal_dist
         )
 
-        return principal_dist, altitude, camera_info, intrinsic_matrix
+        return principal_dist, altitude, camera_info, intrinsic_matrix, image_size
 
     def _extract_focal_length(self, exif_data):
         """Extract the focal length from the image."""
@@ -91,6 +92,7 @@ class CameraInfoFinder:
             return Image.open(image)
     
     def create_intrinsic_matrix(self, focal, principal_dist):
+        """Create the intrinsic matrix of the camera."""
         principal_x = principal_dist['principal_x']
         principal_y = principal_dist['principal_y']
         image_width = principal_x * 2

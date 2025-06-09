@@ -10,7 +10,6 @@ class ModernStitcher:
 
     def __init__(
         self,
-        loftr_info,
         usac_info,
         camera_info,
         img_size,
@@ -20,11 +19,11 @@ class ModernStitcher:
         """Init the modern aerial stitcher"""
         self.loftr = LoFTR(image_size=img_size)
         self.usac = USAC(
-            method=loftr_info['info'],
-            threshold=loftr_info['threshold'],
-            confidence=loftr_info['confidence'],
-            max_iterations=loftr_info['max_iterations'],
-            sigma=loftr_info['sigma']
+            method=usac_info['info'],
+            threshold=usac_info['threshold'],
+            confidence=usac_info['confidence'],
+            max_iterations=usac_info['max_iterations'],
+            sigma=usac_info['sigma']
         )
         self.imgs_path = imgs_path
         self.image_files = sorted([
@@ -40,7 +39,7 @@ class ModernStitcher:
         path = os.path.join(self.imgs_path, filename)
         img_bgr = cv2.imread(path, cv2.IMREAD_COLOR)
         if undistort_flag:
-            k = self.camera['intrinsic_matrix']
+            k = self.camera_info['intrinsic_matrix']
             dist = self.camera_info['distortion']
             img_bgr = cv2.undistort(img_bgr, k, dist)
         img_resized = cv2.resize(img_bgr, self.img_size, interpolation=cv2.INTER_LINEAR)
