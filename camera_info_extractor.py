@@ -1,12 +1,14 @@
 """Finds the necessary info on the camera."""
 import os
+import numpy as np
 from PIL import Image
 from PIL.ExifTags import TAGS
+from PIL.ExifTags import GPSTAGS
 
 class CameraInfoFinder:
     """A class for extracting the intrinsic info."""
     
-    def __init__(self, images_path, sensor_width):
+    def __init__(self, images_path, sensor_width, sensor_height):
         """Init the camera info finder class."""
         if not isinstance(sensor_width, int):
             raise TypeError("sensor_width must be an integer.")
@@ -14,6 +16,7 @@ class CameraInfoFinder:
             raise ValueError("sensor_width must be a positive integer.")
         self.images_path = images_path
         self.sensor_width = sensor_width
+        self.sensor_height = sensor_height
 
     def get_intrinsic(self):
         """Extract the intrisic info of the camera."""
@@ -27,7 +30,7 @@ class CameraInfoFinder:
         image = self._get_first_img()
         width, height = image.size
         principal_x = width // 2
-        principal_y = width // 2
+        principal_y = height // 2
         principal_dist = {
             "principal_x": principal_x,
             "principal_y": principal_y
@@ -39,10 +42,16 @@ class CameraInfoFinder:
         focal_length = self._extract_focal_length(exif_data=exif_data)
         camera_info = {
             "focal_length": focal_length,
-            "sensor_width": self.sensor_width
+            "sensor_width": self.sensor_width,
+            "sensor_height": self.sensor_height
         }
 
-        return principal_dist, altitude, camera_info
+        intrinsic_matrix = self.create_intrinsic_matrix(
+            focal=focal_length,
+            principal_dist=principal_dist
+        )
+
+        return principal_dist, altitude, camera_info, intrinsic_matrix
 
     def _extract_focal_length(self, exif_data):
         """Extract the focal length from the image."""
@@ -80,4 +89,16 @@ class CameraInfoFinder:
         """Get the first image."""
         for image in os.listdir(self.images_path):
             return Image.open(image)
-        
+    
+    def create_intrinsic_matrix(self, focal, principal_dist):
+        principal_x = principal_dist['principal_x']
+        principal_y = principal_dist['principal_y']
+        image_width = principal_x * 2
+        image_height = principal_y * 2
+        focal_x = (focal * image_width) // self.sensor_width
+        focal_y = (focal * image_height) // self.sensor_height
+        return np.array([
+            [focal_x, 0, principal_x],
+            [0, focal_y, principal_y],
+            [0, 0, 1]
+        ])
