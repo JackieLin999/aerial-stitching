@@ -2,8 +2,8 @@
 import os
 import cv2
 import numpy as np
-from loftr.py import LoFTR
-from usac.py import USAC
+from loftr import LoFTR
+from usac import USAC
 
 class ModernStitcher:
     """Class for stitching aerial images."""

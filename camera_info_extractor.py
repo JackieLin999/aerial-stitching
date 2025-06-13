@@ -10,8 +10,10 @@ class CameraInfoFinder:
     
     def __init__(self, images_path, sensor_width, sensor_height):
         """Init the camera info finder class."""
-        if not isinstance(sensor_width, int):
-            raise TypeError("sensor_width must be an integer.")
+        if not isinstance(sensor_width, float):
+            raise TypeError("sensor  width must be a float.")
+        if not isinstance(sensor_height, float):
+            raise TypeError("sensor height has to be a float")
         if sensor_width <= 0:
             raise ValueError("sensor_width must be a positive integer.")
         self.images_path = images_path
@@ -26,9 +28,10 @@ class CameraInfoFinder:
             print(f"invalid path: {self.images_path}")
             print("terminating process")
             raise FileNotFoundError(f"The specified path does not exist: {self.images_path}")
-        
+        print(f"image path: {self.images_path}")
         image = self._get_first_img()
         width, height = image.size
+        print("here")
         image_size = (width, height)
         principal_x = width // 2
         principal_y = height // 2
@@ -60,10 +63,10 @@ class CameraInfoFinder:
             focal_length_tag = 37386
             if focal_length_tag in exif_data:
                 focal_value = exif_data[focal_length_tag]
-                if isinstance(focal_value, tuple):
-                    focal_length = focal_value[0] / focal_value[1]
+                if isinstance(focal_value, (tuple, list)):
+                    focal_length = float(focal_value[0]) / float(focal_value[1])
                 else:
-                    focal_length = focal_value
+                    focal_length = float(focal_value)
         return focal_length
 
     def _extract_altitude(self, exif_data):
@@ -78,18 +81,26 @@ class CameraInfoFinder:
 
                 # Extract altitude (if available)
                 if 'GPSAltitude' in gps_data:
-                    numerator, denominator = gps_data['GPSAltitude']
-                    altitude = numerator / denominator
+                    altitude_value = gps_data['GPSAltitude']
+                    altitude = float(altitude_value)
                     # Handle altitude reference (0 = above sea level, 1 = below)
                     altitude_ref = gps_data.get('GPSAltitudeRef', 0)
                     if altitude_ref == 1:
                         altitude = -altitude
-        return altitude
+                    return altitude
+        return None
 
     def _get_first_img(self):
         """Get the first image."""
         for image in os.listdir(self.images_path):
-            return Image.open(image)
+            image_path = os.path.join(self.images_path, image)
+            try:
+                with Image.open(image_path) as img:
+                    img.verify()
+                    return Image.open(image_path)
+            except (IOError, SyntaxError):
+                print(f"Invalid image file: {image}")
+            return None
     
     def create_intrinsic_matrix(self, focal, principal_dist):
         """Create the intrinsic matrix of the camera."""

@@ -16,10 +16,11 @@ def main():
 
     # Step 2: init camera infos extractor
     print("Initalize cam info extractor")
+    args = parser.parse_args()
     cam_info_extractor = CameraInfoFinder(
         images_path=args.input_dir,
-        sensor_width=args.sensor_width,
-        sensor_height=args.sensor_height
+        sensor_width=float(args.sensor_width),
+        sensor_height=float(args.sensor_height)
     )
     print("finished initalized cam info finder")
     print(f"in: {args.input_dir}")
@@ -60,6 +61,7 @@ def main():
         imgs_path=args.input_dir,
         output_path=args.output_path
     )
+    stitcher.stitch_all()
 
 
 if __name__ == "__main__":
