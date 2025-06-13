@@ -2,6 +2,7 @@ import argparse
 import time
 from modern_aerial_stitcher import ModernStitcher
 from camera_info_extractor import CameraInfoFinder
+import cv2
 
 
 def main():
@@ -43,7 +44,7 @@ def main():
 
     # step 3: initalize the stitcher
     usac_info = {
-        'info': 'USAC_MAGSAC',
+        'info': cv2.USAC_MAGSAC,
         'threshold': 0.7,
         'confidence': 0.9999,
         'max_iterations': 10000,
@@ -54,6 +55,7 @@ def main():
         'intrinsic_matrix': intrinsic_matrix,
         'distortion': None
     }
+    print("initalizing stitcher")
     stitcher = ModernStitcher(
         usac_info=usac_info,
         camera_info=camera_info,
@@ -61,6 +63,8 @@ def main():
         imgs_path=args.input_dir,
         output_path=args.output_path
     )
+    print("finish initalizing stitcher")
+    print("start stitching")
     stitcher.stitch_all()
 
 

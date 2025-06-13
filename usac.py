@@ -23,9 +23,7 @@ class USAC:
         self.params.threshold = threshold
         self.params.loMethod = method
 
-        if method == cv2.USAC_MAGSAC:
-            self.params.magsacSigmaMax = sigma
-        elif method == cv2.USAC_PROSAC:
+        if method == cv2.USAC_PROSAC:
             self.params.prosacSortedSampling = True
 
     def est_homography(self, pts_1, pts_2):
