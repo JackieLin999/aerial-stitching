@@ -18,6 +18,7 @@ class ModernStitcher:
     ):
         """Init the modern aerial stitcher"""
         self.loftr = LoFTR(image_size=img_size)
+        self.img_size = img_size
         self.usac = USAC(
             method=usac_info['info'],
             threshold=usac_info['threshold'],
@@ -30,13 +31,14 @@ class ModernStitcher:
             f for f in os.listdir(imgs_path)
             if f.lower().endswith(('.png', '.jpg', '.jpeg', '.tif', '.tiff'))
         ])
-        self.output_dir = output_dir
-        os.makedirs(output_dir, exist_ok=True)
+        self.output_dir = output_path
+        os.makedirs(output_path, exist_ok=True)
 
     def load_and_process(self, img_path, undistort_flag=False):
         """Load and process a single image from bgr to rgb via disk."""
         """OpenCv uses BGR channels and LoFTOR uses RGB channels."""
-        path = os.path.join(self.imgs_path, filename)
+        path = os.path.join(self.imgs_path, img_path)
+        print(f"test path: {path}")
         img_bgr = cv2.imread(path, cv2.IMREAD_COLOR)
         if undistort_flag:
             k = self.camera_info['intrinsic_matrix']
@@ -54,11 +56,11 @@ class ModernStitcher:
     def stitch_images(self, image_path_1, image_path_2, undistort_flag=False):
         """Stitch 2 different images together."""
         image_1 = self.load_and_process(
-            image_path=image_path_1,
+            img_path=image_path_1,
             undistort_flag=undistort_flag
         )
         image_2 = self.load_and_process(
-            image_path=image_path_2,
+            img_path=image_path_2,
             undistort_flag=undistort_flag
         )
         kps1, kps2, confidence = self.match_features(image_1, image_2)
@@ -72,9 +74,9 @@ class ModernStitcher:
     def stitch_all(self):
         """Stitch all of the images"""
         final_image = None
-        for i in range(len(self.imgs_files) - 1):
-            img1_path = self.imgs_files[i]
-            img2_path = self.imgs_files[i + 1]
+        for i in range(len(self.image_files) - 1):
+            img1_path = self.image_files[i]
+            img2_path = self.image_files[i + 1]
 
             if final_image:
                 final_image, metrics = self.stitch_images(final_image, img2_path)

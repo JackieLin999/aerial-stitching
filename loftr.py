@@ -25,9 +25,15 @@ class LoFTR:
 
     def match(self, img_1, img_2):
         """Match features between 2 images"""
+        if isinstance(img_1, np.ndarray):
+            img_1 = torch.from_numpy(img_1).float().permute(2, 0, 1).unsqueeze(0)
+
+        if isinstance(img_2, np.ndarray):
+            img_2 = torch.from_numpy(img_2).float().permute(2, 0, 1).unsqueeze(0)
+
         input_dict = {
             "image0": K.color.rgb_to_grayscale(img_1),
-            "image1": K.color.rgb_to_grayscale(img2_2),
+            "image1": K.color.rgb_to_grayscale(img_2),
         }
         with torch.inference_mode():
             correspondences = self.matcher(input_dict)
